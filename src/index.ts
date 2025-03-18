@@ -4,8 +4,8 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import zodToJsonSchema from "zod-to-json-schema";
-import { QuoteDepthSchema, QuoteHistoryCandlesticksSchema, QuoteRealtimeInfoSchema, QuoteStaticInfoSchema, Tool, TradeAccountBalanceSchema, TradeStockPositionsSchema } from "./constants";
-import { LongBridge } from "./long-bridge";
+import { QuoteDepthSchema, QuoteHistoryCandlesticksSchema, QuoteRealtimeInfoSchema, QuoteStaticInfoSchema, Tool, ToolNameSchema, TradeAccountBalanceSchema, TradeStockPositionsSchema } from "./constants";
+import { LongBridge, type ServerResult } from "./api";
 
 const server = new Server(
   {
@@ -57,23 +57,20 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
 });
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const longBridge = new LongBridge()
-  switch (request.params.name) {
-    case Tool.TradeAccountBalance:
-      return longBridge.tradeAccountBalance(request.params.arguments)
-    case Tool.TradeStockPositions:
-      return longBridge.tradeStockPositions(request.params.arguments)
-    case Tool.QuoteStaticInfo:
-      return longBridge.quoteStaticInfo(request.params.arguments)
-    case Tool.QuoteRealtimeInfo:
-      return longBridge.quoteRealtimeInfo(request.params.arguments)
-    case Tool.QuoteDepth:
-      return longBridge.quoteDepth(request.params.arguments)
-    case Tool.QuoteHistoryCandlesticks:
-      return longBridge.quoteHistoryCandlesticks(request.params.arguments)
-    default:
-      throw new Error(`Unknown tool ${request.params.name}`);
+  const longBridge = new LongBridge();
+  const toolHandlers: Record<Tool, (args: unknown) => Promise<ServerResult>> = {
+    [Tool.TradeAccountBalance]: longBridge.tradeAccountBalance,
+    [Tool.TradeStockPositions]: longBridge.tradeStockPositions,
+    [Tool.QuoteStaticInfo]: longBridge.quoteStaticInfo,
+    [Tool.QuoteRealtimeInfo]: longBridge.quoteRealtimeInfo,
+    [Tool.QuoteDepth]: longBridge.quoteDepth,
+    [Tool.QuoteHistoryCandlesticks]: longBridge.quoteHistoryCandlesticks,
+  };
+  const { success, data: name, error } = ToolNameSchema.safeParse(request.params.name)
+  if (success) {
+    return toolHandlers[name](request.params.arguments)
   }
+  return longBridge.handleErrorResult(error)
 });
 
 

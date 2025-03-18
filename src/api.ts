@@ -4,7 +4,7 @@ import { ZodError, type z } from "zod";
 import { QuoteDepthSchema, QuoteHistoryCandlesticksSchema, QuoteRealtimeInfoSchema, QuoteStaticInfoSchema, TradeAccountBalanceSchema, TradeStockPositionsSchema } from "./constants";
 import { fromError } from "zod-validation-error";
 
-type ServerResult = z.infer<typeof ServerResultSchema>;
+export type ServerResult = z.infer<typeof ServerResultSchema>;
 
 export class LongBridge {
   private _config?: Config;
@@ -34,7 +34,7 @@ export class LongBridge {
     return this.quoteContext;
   }
 
-  private handleErrorResult(error: unknown): ServerResult {
+  handleErrorResult(error: unknown): ServerResult {
     let errorMessage = '';
     if (error instanceof ZodError) {
       errorMessage = fromError(error).toString();

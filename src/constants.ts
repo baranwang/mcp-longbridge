@@ -1,4 +1,4 @@
-import { AdjustType, NaiveDate, NaiveDatetime, Period } from 'longport';
+import { AdjustType, Period } from 'longport';
 import { z } from 'zod';
 import { parseNaiveDate, parseNaiveDatetime } from './utils';
 
@@ -11,6 +11,8 @@ export enum Tool {
     QuoteDepth = 'quote-depth',
     QuoteHistoryCandlesticks = 'quote-history-candlesticks',
 }
+
+export const ToolNameSchema = z.nativeEnum(Tool)
 
 export const TradeAccountBalanceSchema = z.object({
     currency: z
